@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VoiceWallet</string>
+    <string name="title_activity_main">VoiceWallet</string>
+    <string name="package_name">com.voicewallet.app</string>
+    <string name="custom_url_scheme">com.voicewallet.app</string>
+</resources>

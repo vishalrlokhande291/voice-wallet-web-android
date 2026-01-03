@@ -1,0 +1,148 @@
+##3/jan/26##
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npm run dev
+\
+> voicewallet-ai@0.0.0 dev
+> vite
+
+
+  VITE v6.4.1  ready in 140 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://10.253.88.116:3000/
+  ➜  press h + enter to show help
+^C
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ^[[200~npm install @capacitor/core @capacitor/cli @capacitor/android
+npm: command not found
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap init "VoiceWallet" "com.voicewallet.app"~^C
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ^C
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npm install @capacitor/core @capacitor/cli @capacitor/android
+
+added 84 packages, and audited 219 packages in 14s
+
+35 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap init "VoiceWallet" "com.voicewallet.app"
+✔ Creating capacitor.config.ts in /home/vishallokhande/VoiceWallet in 3.60ms
+[success] capacitor.config.ts created!
+
+Next steps:
+https://capacitorjs.com/docs/getting-started#where-to-go-next
+[?] Join the Ionic Community! 💙
+    Connect with millions of developers on the Ionic Forum and get access to live events, news updates, and more.
+✔ Create free Ionic account? … yes
+
+Thank you for helping improve Capacitor by sharing anonymous usage data! 💖
+Information about the data we collect is available on our website: https://capacitorjs.com/docs/next/cli/telemetry
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npm run build\
+> ^C
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npm run build
+
+> voicewallet-ai@0.0.0 build
+> vite build
+
+vite v6.4.1 building for production...
+
+/index.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+✓ 1703 modules transformed.
+dist/index.html                  0.98 kB │ gzip:   0.53 kB
+dist/assets/index-B2vJVbmK.js  478.97 kB │ gzip: 120.27 kB
+✓ built in 1.57s
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap add android
+✔ Adding native android project in android in 26.16ms
+✔ add in 26.75ms
+✔ Copying web assets from dist to android/app/src/main/assets/public in 3.85ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 630.53μs
+✔ copy android in 10.87ms
+✔ Updating Android plugins in 1.26ms
+✔ update android in 13.20ms
+✔ Syncing Gradle in 319.91μs
+[success] android platform added!
+Follow the Developer Workflow guide to get building:
+https://capacitorjs.com/docs/basics/workflow
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap copy
+✔ Copying web assets from dist to android/app/src/main/assets/public in 7.20ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 768.31μs
+✔ copy android in 15.54ms
+✔ copy web in 2.08ms
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android.
+[error] Platform android. not found.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ^[[200~sudo snap install android-studio --classic
+sudo: command not found
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ sudo snap install android-studio --classic
+[sudo] password for vishallokhande:
+error: cannot perform the following tasks:
+- Download snap "android-studio" (209) from channel "stable" (read tcp [2409:40c2:104f:c585:36d7:63e6:e8bd:9d24]:58574->[2620:2d:4002:1::34]:443: read: network is unreachable)
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ sudo snap install android-studio --classic
+android-studio 2025.1.3.7-wallpapers from Snapcrafters* installed
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ^[[200~ls /snap/android-studio/current/android-studio/bin/studio.sh
+ls: command not found
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ls /snap/android-studio/current/android-studio/bin/studio.sh
+ls: cannot access '/snap/android-studio/current/android-studio/bin/studio.sh': No such file or directory
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ sudo find /snap/android-studio -name studio.sh 2>/dev/null
+/snap/android-studio/209/bin/studio.sh
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npm run build
+
+> voicewallet-ai@0.0.0 build
+> vite build
+
+vite v6.4.1 building for production...
+
+/index.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+✓ 1703 modules transformed.
+dist/index.html                  0.98 kB │ gzip:   0.53 kB
+dist/assets/index-B2vJVbmK.js  478.97 kB │ gzip: 120.27 kB
+✓ built in 1.56s
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap add android
+[error] android platform already exists.
+        To re-add this platform, first remove ./android, then run this command again.
+        WARNING: Your native project will be completely removed.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npm run build
+
+> voicewallet-ai@0.0.0 build
+> vite build
+
+vite v6.4.1 building for production...
+
+/index.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+✓ 1703 modules transformed.
+dist/index.html                  0.98 kB │ gzip:   0.53 kB
+dist/assets/index-B2vJVbmK.js  478.97 kB │ gzip: 120.27 kB
+✓ built in 1.60s
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[error] Unable to launch Android Studio. Is it installed?
+        Attempted to open Android Studio at: /usr/local/android-studio/bin/studio.sh
+        You can configure this with the CAPACITOR_ANDROID_STUDIO_PATH environment variable.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ^[[200~export CAPACITOR_ANDROID_STUDIO_PATH="/snap/android-studio/current/bin/studio.sh"
+export: command not found
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ ~^C
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ export CAPACITOR_ANDROID_STUDIO_PATH="/snap/android-studio/current/bin/studio.sh"
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap open android
+[info] Opening Android project at: android.
+vishallokhande@lpt-pun-ubn-00269:~/VoiceWallet$ npx cap init "VoiceWallet" "com.voicewallet.app"
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
