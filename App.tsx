@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { GoogleGenAI, Modality, Type, LiveServerMessage } from '@google/genai';
-import { 
-  Mic, MicOff, Trash2, TrendingUp, Wallet, List, 
-  PieChart, Activity, AlertCircle, X, Edit3, 
+// Update the import line at the top
+import {
+  Mic, MicOff, Trash2, TrendingUp, Wallet, List,
+  PieChart, Activity, AlertCircle, X, Edit3,
   RefreshCcw, ChevronRight, BarChart3, Database,
   WifiOff, CloudCheck, Calendar, LogOut, Phone, ArrowRight,
-  Filter, CalendarDays
+  Filter, CalendarDays, Check // <--- Add Check here
 } from 'lucide-react';
 import { Expense, CategoryTotal } from './types';
 import { createBlob, decode, decodeAudioData } from './utils/audio';
 
 // Change this to your Spring Boot Server URL
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:8081/api';
 
 const CATEGORY_COLORS: Record<string, string> = {
   Food: 'bg-orange-100 text-orange-600',
@@ -31,6 +32,7 @@ type FilterCriteria = {
 
 export default function App() {
   const [userPhone, setUserPhone] = useState<string | null>(localStorage.getItem('wallet_user_phone'));
+  const [editForm, setEditForm] = useState<{ item: string; amount: string }>({ item: '', amount: '' });
   const [loginInput, setLoginInput] = useState('');
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filter, setFilter] = useState<FilterCriteria>({ period: 'all' });
@@ -72,6 +74,27 @@ export default function App() {
       setExpenses([]);
     }
   }, [userPhone]);
+
+  const startEditing = (exp: Expense) => {
+    setEditingId(exp.id);
+    setEditForm({ item: exp.item, amount: exp.amount.toString() });
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditForm({ item: '', amount: '' });
+  };
+
+  const saveEditing = async (id: string) => {
+    const newAmount = parseFloat(editForm.amount);
+    if (!editForm.item || isNaN(newAmount)) return; // Basic validation
+
+    await updateExpense(id, {
+      item: editForm.item,
+      amount: newAmount
+    });
+    setEditingId(null);
+  };
 
   const fetchExpenses = useCallback(async () => {
     if (!userPhone) return;
@@ -279,13 +302,37 @@ export default function App() {
     return getCategoryBreakdown(criteria);
   }, [getCategoryBreakdown]);
 
+  // Replace your existing stopSession function with this:
+  // In App.tsx, replace the existing stopSession with this:
+
   const stopSession = useCallback(() => {
-    if (processorRef.current) { processorRef.current.disconnect(); processorRef.current = null; }
-    if (micStreamRef.current) { micStreamRef.current.getTracks().forEach(t => t.stop()); micStreamRef.current = null; }
-    if (sessionPromiseRef.current) { sessionPromiseRef.current.then(s => s.close()); sessionPromiseRef.current = null; }
+    // 1. STOP THE AUDIO PROCESSOR FIRST
+    // This prevents the "onaudioprocess" event from firing again
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+
+    // 2. Stop the mic
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(t => t.stop());
+      micStreamRef.current = null;
+    }
+
+    // 3. Close the socket
+    if (sessionPromiseRef.current) {
+      sessionPromiseRef.current.then(s => {
+        // safe close
+        try { s.close(); } catch(e) {}
+      });
+      sessionPromiseRef.current = null;
+    }
+
+    // 4. Cleanup playback
     activeSourcesRef.current.forEach(s => { try { s.stop(); } catch(e){} });
     activeSourcesRef.current.clear();
     nextStartTimeRef.current = 0;
+
     setStatus('idle');
   }, []);
 
@@ -313,9 +360,23 @@ export default function App() {
             const source = audioContextRef.current!.input.createMediaStreamSource(stream);
             const scriptProcessor = audioContextRef.current!.input.createScriptProcessor(4096, 1, 1);
             processorRef.current = scriptProcessor;
+
+            // Inside startSession...
             scriptProcessor.onaudioprocess = (event) => {
+              // GUARD CLAUSE: If processor is null (stopped), do not proceed
+              if (!processorRef.current) return;
+
               const inputData = event.inputBuffer.getChannelData(0);
-              sessionPromise.then(s => s.sendRealtimeInput({ media: createBlob(inputData) }));
+
+              sessionPromise.then(s => {
+                // DOUBLE CHECK: If we stopped while the promise was resolving
+                if (!processorRef.current) return;
+
+                // Catch errors so they don't spam the console
+                s.sendRealtimeInput({ media: createBlob(inputData) });
+              }).catch(e => {
+                // Ignore socket closed errors
+              });
             };
             source.connect(scriptProcessor);
             scriptProcessor.connect(audioContextRef.current!.input.destination);
@@ -604,36 +665,101 @@ export default function App() {
               ) : (
                 <div className="space-y-3">
                   {currentDisplayExpenses.map(exp => (
-                    <div key={exp.id} className="group bg-slate-900/40 backdrop-blur-sm p-5 rounded-[2.25rem] border border-white/5 flex items-center justify-between hover:bg-slate-800/60 hover:border-indigo-500/30 transition-all duration-300">
-                      <div className="flex items-center gap-5">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black shadow-lg ${CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.General}`}>
-                          {exp.item[0].toUpperCase()}
-                        </div>
-                        <div className="space-y-0.5">
-                          {editingId === exp.id ? (
-                            <input autoFocus className="font-bold text-white bg-transparent border-b-2 border-indigo-500 outline-none w-48 text-lg" defaultValue={exp.item} onBlur={(e) => { updateExpense(exp.id, { item: e.target.value }); setEditingId(null); }} />
-                          ) : (
-                            <h4 className="font-bold text-slate-100 text-lg group-hover:text-white transition-colors">{exp.item}</h4>
-                          )}
-                          <div className="flex items-center gap-3 text-[11px] font-bold tracking-wide">
-                            <span className={`px-2.5 py-0.5 rounded-full border border-black/5 ${CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.General}`}>{exp.category}</span>
-                            <div className="flex items-center gap-1.5 text-slate-500">
-                              <Calendar className="w-3 h-3" />
-                              <span>{new Date(exp.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <div key={exp.id} className={`group bg-slate-900/40 backdrop-blur-sm p-5 rounded-[2.25rem] border transition-all duration-300 ${editingId === exp.id ? 'border-indigo-500 bg-slate-800/80' : 'border-white/5 hover:bg-slate-800/60 hover:border-indigo-500/30'} flex items-center justify-between`}>
+
+                        {/* LEFT SIDE: Icon and Name/Date */}
+                        <div className="flex items-center gap-5 flex-1">
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black shadow-lg ${CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.General}`}>
+                            {exp.item[0].toUpperCase()}
+                          </div>
+
+                          <div className="space-y-0.5 w-full">
+                            {editingId === exp.id ? (
+                                /* EDIT MODE: Item Name Input */
+                                <div className="flex flex-col gap-1">
+                                  <input
+                                      autoFocus
+                                      className="font-bold text-white bg-white/5 border-b-2 border-indigo-500 outline-none w-full max-w-[200px] text-lg px-2 py-1 rounded-t"
+                                      value={editForm.item}
+                                      onChange={(e) => setEditForm(prev => ({ ...prev, item: e.target.value }))}
+                                      placeholder="Item name"
+                                  />
+                                </div>
+                            ) : (
+                                /* VIEW MODE: Item Name */
+                                <h4 className="font-bold text-slate-100 text-lg group-hover:text-white transition-colors">{exp.item}</h4>
+                            )}
+
+                            <div className="flex items-center gap-3 text-[11px] font-bold tracking-wide">
+                              <span className={`px-2.5 py-0.5 rounded-full border border-black/5 ${CATEGORY_COLORS[exp.category] || CATEGORY_COLORS.General}`}>{exp.category}</span>
+                              <div className="flex items-center gap-1.5 text-slate-500">
+                                <Calendar className="w-3 h-3" />
+                                <span>{new Date(exp.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <span className="text-2xl font-black text-white tracking-tighter tabular-nums">₹{exp.amount.toLocaleString()}</span>
+
+                        {/* RIGHT SIDE: Amount and Buttons */}
+                        <div className="flex items-center gap-6">
+                          <div className="text-right">
+                            {editingId === exp.id ? (
+                                /* EDIT MODE: Amount Input */
+                                <div className="flex items-center justify-end gap-1">
+                                  <span className="text-xl font-bold text-slate-400">₹</span>
+                                  <input
+                                      type="number"
+                                      className="font-black text-white bg-white/5 border-b-2 border-indigo-500 outline-none w-24 text-2xl text-right px-2 py-1 rounded-t"
+                                      value={editForm.amount}
+                                      onChange={(e) => setEditForm(prev => ({ ...prev, amount: e.target.value }))}
+                                      onKeyDown={(e) => e.key === 'Enter' && saveEditing(exp.id)}
+                                  />
+                                </div>
+                            ) : (
+                                /* VIEW MODE: Amount */
+                                <span className="text-2xl font-black text-white tracking-tighter tabular-nums">₹{exp.amount.toLocaleString()}</span>
+                            )}
+                          </div>
+
+                          <div className="flex gap-1">
+                            {editingId === exp.id ? (
+                                /* EDIT MODE BUTTONS: Save and Cancel */
+                                <>
+                                  <button
+                                      onClick={() => saveEditing(exp.id)}
+                                      className="p-2.5 text-emerald-400 hover:text-white hover:bg-emerald-500 bg-emerald-500/10 rounded-xl transition-all"
+                                      title="Save Changes"
+                                  >
+                                    <Check size={18} />
+                                  </button>
+                                  <button
+                                      onClick={cancelEditing}
+                                      className="p-2.5 text-rose-400 hover:text-white hover:bg-rose-500 bg-rose-500/10 rounded-xl transition-all"
+                                      title="Cancel"
+                                  >
+                                    <X size={18} />
+                                  </button>
+                                </>
+                            ) : (
+                                /* VIEW MODE BUTTONS: Edit and Delete */
+                                <>
+                                  <button
+                                      onClick={() => startEditing(exp)}
+                                      className="p-2.5 text-slate-600 hover:text-indigo-400 transition-colors bg-white/5 rounded-xl hover:bg-indigo-400/10"
+                                  >
+                                    <Edit3 size={18} />
+                                  </button>
+                                  <button
+                                      onClick={() => deleteExpense(exp.id)}
+                                      className="p-2.5 text-slate-600 hover:text-rose-400 transition-colors bg-white/5 rounded-xl hover:bg-rose-400/10"
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex gap-1">
-                          <button onClick={() => setEditingId(exp.id)} className="p-2.5 text-slate-600 hover:text-indigo-400 transition-colors bg-white/5 rounded-xl hover:bg-indigo-400/10"><Edit3 size={18} /></button>
-                          <button onClick={() => deleteExpense(exp.id)} className="p-2.5 text-slate-600 hover:text-rose-400 transition-colors bg-white/5 rounded-xl hover:bg-rose-400/10"><Trash2 size={18} /></button>
-                        </div>
                       </div>
-                    </div>
                   ))}
                 </div>
               )}
